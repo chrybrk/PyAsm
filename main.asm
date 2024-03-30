@@ -1,9 +1,5 @@
 format ELF64 executable
 
-; Task
-; - Able to read file from somewhere
-; - Able to parse it
-
 sys_read            equ 0
 sys_write           equ 1
 sys_open            equ 2
@@ -117,19 +113,8 @@ main:
 
     write STDOUT, buffer, [len] ; print buffer
 
-    mmap NULL, 4 * 10, PROT_READ_or_PROT_WRITE, MAP_PRIVATE_or_MAP_ANNOYMOUS, 0, 0
-    cmp rax, MAP_FAILED
-    je .err
-    mov PTR structure, rax
-
-    mov rdx, 0
-.loop:
-    mov qword [structure+rdx], 49
-    inc rdx
-    cmp rdx, 1024
-    jne .loop
-
-    ; write STDOUT, structure, 40
+    mov dword [structure], 10
+    mov dword [structure+4], 20
 
     write STDOUT, ok_msg, ok_msg_len ; OK, if everything went well.
     exit 0
@@ -142,7 +127,6 @@ segment readable writable
 pathname db "main.py"
 file_fd dq 0
 len dq 0
-structure dq 0
 
 ; msg
 err_msg db "[ERR]: ERROR!", 10
@@ -153,3 +137,4 @@ ok_msg_len = $ - ok_msg
 
 char db 0
 buffer db 0
+structure rq 1024

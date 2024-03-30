@@ -1,34 +1,55 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <fcntl.h>
-#include <sys/mman.h>
 #include <unistd.h>
 
 #define STDIN 0
 #define STDOUT 1
 #define STDERR 2
 
+#define MAX_CHARACTER 1024
+#define MAX_TOKENS 1024
+
+// [x]: read file
+// [ ]: generate tokens
+// [ ]: parse tokens
+// [ ]: intrepret
+
+char *identifiers[] = { "print", "exit" };
+char  symbols[] = { '(', ')', ';', '"' };
+char  t_type[] = {
+    0, // identifier
+    1, // keyword
+    2, // symbol
+    3, // string_lit
+    4, // int_lit
+};
+
+struct TOKEN
+{
+    unsigned char type; // 256 token type
+    unsigned long int value; // 32bits: starting, 32bits: ending
+    unsigned short int line_number;
+};
+
+static char buffer[MAX_CHARACTER];
+static struct TOKEN tokens[MAX_TOKENS];
+
+char cannot_read_file_err[] = "[ERROR]: Cannot read file from path.";
+size_t crfe_len = sizeof(cannot_read_file_err) / sizeof(cannot_read_file_err[0]);
+
+ssize_t read_file(const char *pathname)
+{
+    int fd = open(pathname, O_RDONLY);
+    if (fd < 0) write(STDERR, cannot_read_file_err, crfe_len - 1);
+    ssize_t len = read(fd, buffer, MAX_CHARACTER);
+    close(fd);
+
+    return len;
+}
 
 int main()
 {
-    int *ptr0 = mmap(NULL, 1024, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-    int *ptr1 = mmap(ptr0, 1024, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-
-    printf("PROT_READ = %d\n", PROT_READ);
-    printf("PROT_WRITE = %d\n", PROT_WRITE);
-    printf("MAP_PRIVATE = %d\n", MAP_PRIVATE);
-    printf("MAP_ANONYMOUS = %d\n", MAP_ANONYMOUS);
-    printf("MAP_FAILED = %p\n", MAP_FAILED);
-
-
-    if (ptr0 == MAP_FAILED) printf("cannot create memory block."), exit(139);
-    if (ptr1 == MAP_FAILED) printf("cannot create memory block."), exit(139);
-
-    printf("%p\n", ptr0);
-    printf("%p\n", ptr1);
-
-    munmap(ptr0, 8);
-    munmap(ptr1, 8);
+    ssize_t len = read_file("main.p");
+    write(STDOUT, buffer, len);
 
     return 0;
 }
